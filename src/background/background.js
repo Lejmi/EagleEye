@@ -3,8 +3,11 @@
 
 console.log("EagleEye background service worker loaded - v1.4.0");
 
+// Import configuration
+importScripts('config.js');
+
 // Google Safe Browsing API Configuration
-const SAFE_BROWSING_API_KEY = 'AIzaSyDfXZzw9dZYW5_66Rx-uAvXow-RYvCS_b4';
+const SAFE_BROWSING_API_KEY = CONFIG.SAFE_BROWSING_API_KEY;
 const API_ENDPOINT = `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${SAFE_BROWSING_API_KEY}`;
 
 // Cache for URL check results to minimize API calls

@@ -1,0 +1,22 @@
+# EagleEye - Chrome Extension
+
+# Dependencies
+node_modules/
+
+# Configuration (contains sensitive API keys)
+src/config.js
+
+# Build artifacts
+dist/
+*.zip
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
