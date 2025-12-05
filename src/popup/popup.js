@@ -1,5 +1,4 @@
 // EagleEye Popup Script v1.3.0
-// Handles user interface interactions and status display
 
 console.log('EagleEye popup loaded - v1.3.0');
 
