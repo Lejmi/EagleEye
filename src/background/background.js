@@ -196,8 +196,15 @@ async function blockMaliciousPage(tabId, url, threats) {
   try {
     // Check if tab is still valid and not showing an error
     const tab = await chrome.tabs.get(tabId);
-    if (!tab || tab.url.startsWith('chrome-error://')) {
-      console.log('Cannot inject into error page, skipping');
+    
+    // Don't inject into error pages, internal pages, or if tab doesn't exist
+    if (!tab || !tab.url || 
+        tab.url.startsWith('chrome-error://') || 
+        tab.url.startsWith('chrome://') ||
+        tab.url.startsWith('about:') ||
+        tab.url.startsWith('edge://') ||
+        tab.url.startsWith('chrome-extension://')) {
+      console.log('Cannot inject into this page type, skipping overlay');
       return;
     }
 
@@ -209,9 +216,9 @@ async function blockMaliciousPage(tabId, url, threats) {
     });
     console.log('Blocker overlay injected for:', url);
   } catch (err) {
-    console.error('Failed to inject blocker overlay:', err);
-    // Don't try fallback navigation - it causes error pages
-    // Just rely on the notification that was already shown
+    // Silently handle injection failures - page might have navigated away
+    // or be in a state that doesn't allow injection
+    console.log('Could not inject blocker (page may be gone or restricted):', err.message);
   }
 }
 
