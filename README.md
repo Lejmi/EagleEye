@@ -2,6 +2,17 @@
 
 A Manifest V3 Chrome extension that protects users from phishing and unsafe websites in real-time using Google Safe Browsing API.
 
+## Screenshots
+
+### Safe Site Detection
+![Safe Site Detected](images/safe_detected.png)
+
+### Malicious Site Blocked
+![Malicious Site Detected](images/malicious_detected.png)
+
+### Threat Notification
+![Threat Notification](images/notification.png)
+
 ## Features
 
 - 🛡️ **Real-time Protection** - Automatically checks URLs as you browse
