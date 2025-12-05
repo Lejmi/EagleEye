@@ -1,10 +1,49 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>EagleEye</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EagleEye - Safe Browsing Assistant</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h1>EagleEye</h1>
-  <p>Hello from EagleEye!</p>
+  <div class="container">
+    <!-- Header Section -->
+    <div class="header">
+      <div class="logo-section">
+        <img src="../../images/EagleEye_logo.png" alt="EagleEye Logo" class="logo">
+        <div class="title-section">
+          <h1>EagleEye</h1>
+          <p class="subtitle">Safe Browsing Assistant</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Status Display Section -->
+    <div class="status-section">
+      <div id="statusIndicator" class="status-indicator checking">
+        <span id="statusIcon" class="status-icon">⏳</span>
+        <div class="status-text-wrapper">
+          <span id="statusText" class="status-text">Checking site safety...</span>
+        </div>
+      </div>
+      <div id="currentUrl" class="current-url">Loading current page...</div>
+    </div>
+    
+    <!-- Action Button -->
+    <div class="actions">
+      <button id="forceCheckBtn" class="btn btn-primary">
+        <span class="btn-icon">🔍</span>
+        <span>Force Check This Site</span>
+      </button>
+    </div>
+    
+    <!-- API Key Notice -->
+    <div class="notice">
+      <small>⚠️ Requires Google Safe Browsing API key in background.js</small>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
 </body>
 </html>
