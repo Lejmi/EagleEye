@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "EagleEye",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "EagleEye is a Manifest V3 Chrome extension that protects users from phishing and unsafe websites in real time. It analyzes pages, detects suspicious URLs, and warns you before interacting with harmful content. Lightweight and privacy-focused, EagleEye ensures safer, more secure browsing without slowing you down.",
   "permissions": [
     "storage",
     "tabs",
-    "notifications"
+    "notifications",
+    "scripting"
   ],
   "host_permissions": [
     "https://safebrowsing.googleapis.com/*"

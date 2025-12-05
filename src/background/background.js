@@ -1,7 +1,7 @@
-// EagleEye Background Service Worker v1.3.0
+// EagleEye Background Service Worker v1.4.0
 // Handles URL monitoring and Google Safe Browsing API integration
 
-console.log("EagleEye background service worker loaded - v1.3.0");
+console.log("EagleEye background service worker loaded - v1.4.0");
 
 // Google Safe Browsing API Configuration
 const SAFE_BROWSING_API_KEY = 'AIzaSyDfXZzw9dZYW5_66Rx-uAvXow-RYvCS_b4';
@@ -77,6 +77,11 @@ async function checkURL(url, tabId) {
       const age = Date.now() - cached.timestamp;
       if (age < CACHE_DURATION) {
         console.log('Using cached result for:', url);
+        if (!cached.safe && tabId) {
+          blockMaliciousPage(tabId, url, cached.threats || []);
+        } else if (cached.safe && tabId) {
+          clearPageBlocker(tabId);
+        }
         return cached;
       }
     }
@@ -86,7 +91,7 @@ async function checkURL(url, tabId) {
     const requestBody = {
       client: {
         clientId: "eagleeye-extension",
-        clientVersion: "1.3.0"
+        clientVersion: "1.4.0"
       },
       threatInfo: {
         // Threat types to check for
@@ -130,9 +135,14 @@ async function checkURL(url, tabId) {
     // Auto-clear cache entry after duration
     setTimeout(() => delete urlCheckCache[url], CACHE_DURATION);
 
-    // If unsafe, show warning notification
+    // If unsafe, notify and block page; if safe, ensure blocker cleared
     if (!isSafe) {
       showThreatNotification(url, data.matches);
+      if (tabId) {
+        blockMaliciousPage(tabId, url, data.matches);
+      }
+    } else if (tabId) {
+      clearPageBlocker(tabId);
     }
 
     return result;
@@ -161,6 +171,177 @@ function showThreatNotification(url, threats) {
     priority: 2,
     requireInteraction: true  // Keeps notification visible until dismissed
   });
+}
+
+/**
+ * Inject a blocking overlay into the page to prevent access when malicious
+ * @param {number} tabId - The tab to block
+ * @param {string} url - The malicious URL
+ * @param {Array} threats - Threat data from Safe Browsing
+ */
+function blockMaliciousPage(tabId, url, threats) {
+  if (!tabId) return;
+
+  const threatTypes = (threats || []).map(t => t.threatType).join(', ');
+
+  chrome.scripting.executeScript({
+    target: { tabId },
+    func: injectEagleEyeBlocker,
+    args: [url, threatTypes]
+  }).catch(err => console.error('Failed to inject blocker overlay:', err));
+}
+
+/**
+ * Clear the blocking overlay if present
+ * @param {number} tabId - The tab to clear
+ */
+function clearPageBlocker(tabId) {
+  if (!tabId) return;
+
+  chrome.scripting.executeScript({
+    target: { tabId },
+    func: removeEagleEyeBlocker
+  }).catch(err => console.error('Failed to clear blocker overlay:', err));
+}
+
+// This function runs in the context of the page to inject a blocking overlay
+function injectEagleEyeBlocker(url, threatTypes) {
+  try {
+    // Remove any existing overlay
+    const existing = document.getElementById('eagleeye-blocker');
+    if (existing) existing.remove();
+
+    const style = document.createElement('style');
+    style.id = 'eagleeye-blocker-style';
+    style.textContent = `
+      #eagleeye-blocker {
+        position: fixed;
+        inset: 0;
+        background: rgba(26, 35, 50, 0.92);
+        color: #ffffff;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      }
+      #eagleeye-blocker .card {
+        background: #1f2937;
+        border: 2px solid #d4af37;
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 520px;
+        width: 90%;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+        text-align: center;
+      }
+      #eagleeye-blocker h1 {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+      #eagleeye-blocker p {
+        margin: 8px 0;
+        line-height: 1.5;
+        color: #e5e7eb;
+      }
+      #eagleeye-blocker .threats {
+        color: #f87171;
+        font-weight: 700;
+      }
+      #eagleeye-blocker .url {
+        word-break: break-all;
+        font-family: 'Courier New', monospace;
+        color: #eab308;
+        margin: 8px 0 12px 0;
+      }
+      #eagleeye-blocker .actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      #eagleeye-blocker button {
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 700;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      #eagleeye-blocker .leave {
+        background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+        color: #fff;
+        box-shadow: 0 6px 12px rgba(239, 68, 68, 0.35);
+      }
+      #eagleeye-blocker .leave:hover { transform: translateY(-2px); }
+      #eagleeye-blocker .leave:active { transform: translateY(0); }
+      #eagleeye-blocker .back {
+        background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+        color: #0f172a;
+        box-shadow: 0 6px 12px rgba(212, 175, 55, 0.3);
+      }
+      #eagleeye-blocker .back:hover { transform: translateY(-2px); }
+      #eagleeye-blocker .back:active { transform: translateY(0); }
+    `;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'eagleeye-blocker';
+    overlay.innerHTML = `
+      <div class="card">
+        <h1>🚫 Dangerous site blocked</h1>
+        <p>This page was blocked by EagleEye to keep you safe.</p>
+        <p class="threats">Detected: ${threatTypes || 'Unknown threat'}</p>
+        <p class="url">${url}</p>
+        <div class="actions">
+          <button class="back" id="eagleeye-back">Go Back</button>
+          <button class="leave" id="eagleeye-leave">Leave Site</button>
+        </div>
+      </div>
+    `;
+
+    document.documentElement.appendChild(style);
+    document.documentElement.appendChild(overlay);
+
+    // Prevent scrolling/interactions behind overlay
+    document.documentElement.style.overflow = 'hidden';
+    document.body && (document.body.style.overflow = 'hidden');
+
+    // Button handlers
+    const backBtn = document.getElementById('eagleeye-back');
+    const leaveBtn = document.getElementById('eagleeye-leave');
+
+    if (backBtn) {
+      backBtn.onclick = () => {
+        try { history.back(); } catch (e) { console.error(e); }
+      };
+    }
+
+    if (leaveBtn) {
+      leaveBtn.onclick = () => {
+        try {
+          window.stop();
+          location.href = 'about:blank';
+        } catch (e) {
+          console.error(e);
+        }
+      };
+    }
+  } catch (err) {
+    console.error('Failed to inject blocker overlay (content script):', err);
+  }
+}
+
+// Removes the injected overlay from the page
+function removeEagleEyeBlocker() {
+  const overlay = document.getElementById('eagleeye-blocker');
+  const style = document.getElementById('eagleeye-blocker-style');
+  if (overlay) overlay.remove();
+  if (style) style.remove();
+  // Restore scroll
+  document.documentElement.style.overflow = '';
+  if (document.body) document.body.style.overflow = '';
 }
 
 /**
