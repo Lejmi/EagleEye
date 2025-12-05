@@ -16,7 +16,6 @@ A Manifest V3 Chrome extension that protects users from phishing and unsafe webs
 ## Features
 
 - 🛡️ **Real-time Protection** - Automatically checks URLs as you browse
-- 🚫 **Page Blocking** - Blocks malicious sites with a full-page warning overlay
 - ⚠️ **Threat Notifications** - Alerts you when dangerous sites are detected
 - ✅ **Manual Checking** - Force check any site with one click
 - 📋 **Exclusion List** - Whitelist trusted sites to skip checks
@@ -128,4 +127,4 @@ See LICENSE file for details.
 
 ## Support
 
-For issues or questions, please open an issue on GitHub.
+For issues or questions, please open an issue.
