@@ -171,7 +171,7 @@ function showThreatNotification(url, threats) {
   
   chrome.notifications.create({
     type: 'basic',
-    iconUrl: 'images/EagleEye_logo.png',
+    iconUrl: '/images/EagleEye_logo.png',
     title: '⚠️ Dangerous Website Detected!',
     message: `This site may contain: ${threatTypes}\n\nBe careful proceeding to: ${url}`,
     priority: 2,
