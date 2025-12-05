@@ -191,6 +191,13 @@ async function blockMaliciousPage(tabId, url, threats) {
   const threatTypes = (threats || []).map(t => t.threatType).join(', ');
 
   try {
+    // Check if tab is still valid and not showing an error
+    const tab = await chrome.tabs.get(tabId);
+    if (!tab || tab.url.startsWith('chrome-error://')) {
+      console.log('Cannot inject into error page, skipping');
+      return;
+    }
+
     await chrome.scripting.executeScript({
       target: { tabId, allFrames: false },
       func: injectEagleEyeBlocker,
@@ -200,14 +207,8 @@ async function blockMaliciousPage(tabId, url, threats) {
     console.log('Blocker overlay injected for:', url);
   } catch (err) {
     console.error('Failed to inject blocker overlay:', err);
-    // Fallback: try to navigate to a warning page
-    try {
-      await chrome.tabs.update(tabId, { 
-        url: `data:text/html,<html><head><style>body{font-family:sans-serif;background:#1a2332;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}h1{color:#d4af37;}</style></head><body><div><h1>🚫 Dangerous Site Blocked</h1><p>EagleEye blocked this page: ${encodeURIComponent(url)}</p><p>Threats detected: ${encodeURIComponent(threatTypes || 'Unknown')}</p><button onclick="history.back()" style="padding:10px 20px;margin:10px;background:#d4af37;border:none;border-radius:5px;cursor:pointer;">Go Back</button></div></body></html>`
-      });
-    } catch (navErr) {
-      console.error('Failed to navigate to warning page:', navErr);
-    }
+    // Don't try fallback navigation - it causes error pages
+    // Just rely on the notification that was already shown
   }
 }
 
@@ -219,6 +220,13 @@ async function clearPageBlocker(tabId) {
   if (!tabId) return;
 
   try {
+    // Check if tab exists and is not an error page
+    const tab = await chrome.tabs.get(tabId);
+    if (!tab || tab.url.startsWith('chrome-error://') || 
+        tab.url.startsWith('chrome://') || tab.url.startsWith('about:')) {
+      return;
+    }
+
     await chrome.scripting.executeScript({
       target: { tabId, allFrames: false },
       func: removeEagleEyeBlocker,
@@ -226,7 +234,7 @@ async function clearPageBlocker(tabId) {
     });
     console.log('Blocker overlay cleared for tab:', tabId);
   } catch (err) {
-    // Silently fail - overlay might not exist
+    // Silently fail - overlay might not exist or tab gone
     console.log('No blocker to clear or failed:', err.message);
   }
 }
