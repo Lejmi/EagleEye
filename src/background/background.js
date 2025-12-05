@@ -64,6 +64,12 @@ function extractDomain(url) {
  */
 async function checkURL(url, tabId) {
   try {
+    // Skip chrome:// pages, extension pages, and data URLs
+    if (!url || url.startsWith('chrome://') || url.startsWith('chrome-extension://') || 
+        url.startsWith('about:') || url.startsWith('data:')) {
+      return { safe: true, internal: true };
+    }
+
     // Check if domain is in exclusion list
     const domain = extractDomain(url);
     if (domain && excludedDomains.includes(domain)) {
@@ -179,29 +185,50 @@ function showThreatNotification(url, threats) {
  * @param {string} url - The malicious URL
  * @param {Array} threats - Threat data from Safe Browsing
  */
-function blockMaliciousPage(tabId, url, threats) {
+async function blockMaliciousPage(tabId, url, threats) {
   if (!tabId) return;
 
   const threatTypes = (threats || []).map(t => t.threatType).join(', ');
 
-  chrome.scripting.executeScript({
-    target: { tabId },
-    func: injectEagleEyeBlocker,
-    args: [url, threatTypes]
-  }).catch(err => console.error('Failed to inject blocker overlay:', err));
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId, allFrames: false },
+      func: injectEagleEyeBlocker,
+      args: [url, threatTypes],
+      world: 'MAIN'
+    });
+    console.log('Blocker overlay injected for:', url);
+  } catch (err) {
+    console.error('Failed to inject blocker overlay:', err);
+    // Fallback: try to navigate to a warning page
+    try {
+      await chrome.tabs.update(tabId, { 
+        url: `data:text/html,<html><head><style>body{font-family:sans-serif;background:#1a2332;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center;}h1{color:#d4af37;}</style></head><body><div><h1>🚫 Dangerous Site Blocked</h1><p>EagleEye blocked this page: ${encodeURIComponent(url)}</p><p>Threats detected: ${encodeURIComponent(threatTypes || 'Unknown')}</p><button onclick="history.back()" style="padding:10px 20px;margin:10px;background:#d4af37;border:none;border-radius:5px;cursor:pointer;">Go Back</button></div></body></html>`
+      });
+    } catch (navErr) {
+      console.error('Failed to navigate to warning page:', navErr);
+    }
+  }
 }
 
 /**
  * Clear the blocking overlay if present
  * @param {number} tabId - The tab to clear
  */
-function clearPageBlocker(tabId) {
+async function clearPageBlocker(tabId) {
   if (!tabId) return;
 
-  chrome.scripting.executeScript({
-    target: { tabId },
-    func: removeEagleEyeBlocker
-  }).catch(err => console.error('Failed to clear blocker overlay:', err));
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId, allFrames: false },
+      func: removeEagleEyeBlocker,
+      world: 'MAIN'
+    });
+    console.log('Blocker overlay cleared for tab:', tabId);
+  } catch (err) {
+    // Silently fail - overlay might not exist
+    console.log('No blocker to clear or failed:', err.message);
+  }
 }
 
 // This function runs in the context of the page to inject a blocking overlay

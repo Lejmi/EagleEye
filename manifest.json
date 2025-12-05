@@ -10,7 +10,8 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://safebrowsing.googleapis.com/*"
+    "https://safebrowsing.googleapis.com/*",
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "src/background/background.js"
