@@ -1,7 +1,7 @@
-// EagleEye Background Service Worker v1.1.0
+// EagleEye Background Service Worker v1.3.0
 // Handles URL monitoring and Google Safe Browsing API integration
 
-console.log("EagleEye background service worker loaded - v1.1.0");
+console.log("EagleEye background service worker loaded - v1.3.0");
 
 // Google Safe Browsing API Configuration
 // TODO: Replace with your actual API key from Google Cloud Console
@@ -14,11 +14,20 @@ const API_ENDPOINT = `https://safebrowsing.googleapis.com/v4/threatMatches:find?
 let urlCheckCache = {};
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Excluded domains list - sites that won't be checked
+let excludedDomains = [];
+
 // Initialize extension on install
 chrome.runtime.onInstalled.addListener(() => {
   console.log('EagleEye installed - Safe Browsing protection active');
   // Initialize storage with empty excluded domains list
   chrome.storage.local.set({ excludedDomains: [] });
+});
+
+// Load excluded domains from storage on startup
+chrome.storage.local.get(['excludedDomains'], (result) => {
+  excludedDomains = result.excludedDomains || [];
+  console.log('Loaded excluded domains:', excludedDomains);
 });
 
 // Monitor tab updates and check URLs automatically
@@ -36,6 +45,20 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 /**
+ * Extract domain from URL
+ * @param {string} url - The URL to extract domain from
+ * @returns {string|null} The domain or null if invalid
+ */
+function extractDomain(url) {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Main function to check URL safety using Google Safe Browsing API
  * @param {string} url - The URL to check
  * @param {number} tabId - The tab ID where the URL is loaded
@@ -43,6 +66,13 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
  */
 async function checkURL(url, tabId) {
   try {
+    // Check if domain is in exclusion list
+    const domain = extractDomain(url);
+    if (domain && excludedDomains.includes(domain)) {
+      console.log('Domain excluded from checks:', domain);
+      return { safe: true, excluded: true, domain: domain };
+    }
+
     // Check if URL is in cache and still valid
     if (urlCheckCache[url]) {
       const cached = urlCheckCache[url];
@@ -58,7 +88,7 @@ async function checkURL(url, tabId) {
     const requestBody = {
       client: {
         clientId: "eagleeye-extension",
-        clientVersion: "1.1.0"
+        clientVersion: "1.3.0"
       },
       threatInfo: {
         // Threat types to check for
@@ -147,6 +177,41 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse(result);
     });
     return true; // Required for async sendResponse
+  }
+  
+  // Handle add domain to exclusion list
+  if (request.action === 'excludeDomain') {
+    const domain = extractDomain(request.url);
+    if (domain && !excludedDomains.includes(domain)) {
+      excludedDomains.push(domain);
+      // Save to storage
+      chrome.storage.local.set({ excludedDomains }, () => {
+        console.log('Domain added to exclusion list:', domain);
+        sendResponse({ success: true, domain: domain });
+      });
+    } else if (domain && excludedDomains.includes(domain)) {
+      sendResponse({ success: false, message: 'Domain already excluded' });
+    } else {
+      sendResponse({ success: false, message: 'Invalid domain' });
+    }
+    return true;
+  }
+  
+  // Handle remove domain from exclusion list
+  if (request.action === 'removeExclusion') {
+    excludedDomains = excludedDomains.filter(d => d !== request.domain);
+    // Save to storage
+    chrome.storage.local.set({ excludedDomains }, () => {
+      console.log('Domain removed from exclusion list:', request.domain);
+      sendResponse({ success: true });
+    });
+    return true;
+  }
+  
+  // Handle get excluded domains list
+  if (request.action === 'getExcluded') {
+    sendResponse({ domains: excludedDomains });
+    return true;
   }
 });
 

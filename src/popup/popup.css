@@ -1,4 +1,4 @@
-/* EagleEye Popup Styles v1.2.0 */
+/* EagleEye Popup Styles v1.3.0 */
 /* Color scheme inspired by EagleEye logo: Dark blue/navy, gold/amber accents */
 
 /* Reset and base styles */
@@ -10,7 +10,7 @@
 
 body {
   width: 420px;
-  min-height: 300px;
+  min-height: 400px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background: #f8f9fa;
   color: #2c3e50;
@@ -122,6 +122,12 @@ body {
   border-left: 4px solid #17a2b8;
 }
 
+.status-indicator.excluded {
+  background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+  color: #0c5460;
+  border-left: 4px solid #17a2b8;
+}
+
 /* Pulse animation for danger status */
 @keyframes pulse-danger {
   0%, 100% {
@@ -151,6 +157,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  border-bottom: 1px solid #e9ecef;
 }
 
 .btn {
@@ -201,6 +208,114 @@ body {
   box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
 }
 
+/* Secondary button - Gray with navy hover */
+.btn-secondary {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  color: white;
+  border: 2px solid #495057;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+  border-color: #343a40;
+  box-shadow: 0 4px 8px rgba(52, 58, 64, 0.3);
+}
+
+/* Excluded Sites Section */
+.excluded-section {
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.section-header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.badge {
+  background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.excluded-list {
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  padding: 20px;
+  font-style: italic;
+}
+
+.excluded-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: white;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  font-size: 12px;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.excluded-item:hover {
+  border-color: #d4af37;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, 0.2);
+}
+
+.domain-name {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.remove-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.remove-btn:hover {
+  background: #c82333;
+  transform: scale(1.1);
+}
+
+.remove-btn:active {
+  transform: scale(0.95);
+}
+
 /* Notice Section */
 .notice {
   padding: 12px 20px;
@@ -219,6 +334,7 @@ body {
 
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {

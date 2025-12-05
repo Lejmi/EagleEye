@@ -14,7 +14,7 @@
         <img src="../../images/EagleEye_logo.png" alt="EagleEye Logo" class="logo">
         <div class="title-section">
           <h1>EagleEye</h1>
-          <p class="subtitle">Safe Browsing Assistant</p>
+          <p class="subtitle">Safe Browsing Assistant v1.3.0</p>
         </div>
       </div>
     </div>
@@ -30,12 +30,27 @@
       <div id="currentUrl" class="current-url">Loading current page...</div>
     </div>
     
-    <!-- Action Button -->
+    <!-- Action Buttons -->
     <div class="actions">
       <button id="forceCheckBtn" class="btn btn-primary">
         <span class="btn-icon">🔍</span>
         <span>Force Check This Site</span>
       </button>
+      <button id="excludeBtn" class="btn btn-secondary">
+        <span class="btn-icon">✓</span>
+        <span>Exclude This Site</span>
+      </button>
+    </div>
+    
+    <!-- Excluded Sites Section -->
+    <div class="excluded-section">
+      <div class="section-header">
+        <h3>Excluded Sites</h3>
+        <span id="excludedCount" class="badge">0</span>
+      </div>
+      <div id="excludedList" class="excluded-list">
+        <p class="empty-state">No excluded sites</p>
+      </div>
     </div>
     
     <!-- API Key Notice -->
