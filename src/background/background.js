@@ -3,8 +3,8 @@
 
 console.log("EagleEye background service worker loaded - v1.4.0");
 
-// Import configuration (path relative to extension root where manifest.json is)
-importScripts('src/config.js');
+// Import configuration (path relative to the background script location)
+importScripts('../config.js');
 
 // Google Safe Browsing API Configuration
 const SAFE_BROWSING_API_KEY = CONFIG.SAFE_BROWSING_API_KEY;
